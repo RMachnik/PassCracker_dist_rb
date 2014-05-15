@@ -5,31 +5,25 @@ require 'drb'
 class Client
 
   def initialize(filename)
-    @crackingTasks = Array.new
-    lines = Array.new
+    @hashes = Array.new
     File.new(filename).each_line do |line|
       if m = line.chomp.match(/\b([a-fA-F0-9]{32})\b/)
-        lines << m[1]
+        @hashes << m[1]
       end
     end
-    lines.uniq!
-    lines.each do |x|
-      @crackingTasks.push(CrackingTask.new(x))
-    end
-
-    puts "Loaded #{@crackingTasks.count} unique hashes"
+    @hashes.uniq!
   end
 
   def addTasksToServer(server)
-    @crackingTasks.each do |task|
-      server.registerTask(task)
-      puts "Client add task to server #{task.hash}"
+    @hashes.each do |hash|
+      server.registerTask(hash)
+      puts "Client add task to server #{hash}"
     end
   end
 
   def displayLoadedTasks
-    @crackingTasks.each do |task|
-      puts task.hash
+    @hashes.each do |hash|
+      puts hash
     end
   end
 

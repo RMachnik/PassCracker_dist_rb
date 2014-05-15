@@ -19,19 +19,17 @@ class Worker
     return true
   end
 
-  def assignTask(task)
+  def assignTask(hash)
     @isWorking = true
-    puts "New task assigned to worker: #{name} task: #{task.hash}!"
-    task.worker = self
+    puts "New task assigned to worker: #{name} task: #{hash}!"
     sleep(3)
-    val = crack_single_hash(task.hash)
+    val = crack_single_hash(hash)
     puts "Task is done #{val}!"
-    if !val.nil? && !val.to_s.empty?
-      task.done = true
+    if val.nil? && val.to_s.empty?
+      puts "fail with searching it"
     end
-    task.value = val
     @isWorking = false
-    @server.saveDone(task)
+    @server.saveDone(hash,val)
   end
 
   def crack_single_hash(hash)

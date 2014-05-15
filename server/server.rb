@@ -29,12 +29,15 @@ class Server
     end
   end
 
-  def registerTask(task)
+  def registerTask(hash)
+    task = CrackingTask.new(hash)
     crackingTasksList.push(task)
     puts "Task added to server: #{task.hash}"
   end
 
-  def saveDone(task)
+  def saveDone(hash,val)
+    task = CrackingTask.new(hash)
+    task.value=val
     append_to_cache(task)
     @results.push(task)
   end
@@ -46,7 +49,7 @@ class Server
         if !worker.isWorking
           first_not_assigned_task = getFirstNotAssignedTask
           if !first_not_assigned_task.nil?
-            worker.assignTask(first_not_assigned_task)
+            worker.assignTask(first_not_assigned_task.hash)
             first_not_assigned_task.setWorker(worker)
             @crackingTasksList.delete(first_not_assigned_task)
             @assignedTaskToWorkers.push(first_not_assigned_task)
