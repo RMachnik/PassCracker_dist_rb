@@ -30,7 +30,7 @@ class Client
 end
 
 client = Client.new("example.txt")
-client.displayLoadedTasks
+#client.displayLoadedTasks
 
 DRb.start_service
 ring_server = Rinda::RingFinger.primary

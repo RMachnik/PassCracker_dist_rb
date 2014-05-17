@@ -19,7 +19,6 @@ class Server
     @assignedTaskToWorkers = Array.new
     @results = Array.new
     @mutex = Mutex.new
-    load_cache
   end
 
   def registerWorker(worker)
@@ -35,10 +34,11 @@ class Server
     puts "Task added to server: #{task.hash}"
   end
 
-  def saveDone(hash,val)
+  def saveDone(hash, val)
     task = CrackingTask.new(hash)
     task.value=val
-    append_to_cache(task)
+    task.done=true
+    saveToFile(task)
     @results.push(task)
   end
 
@@ -74,7 +74,7 @@ class Server
     notDoneTasks = Array.new
     if @assignedTaskToWorkers.size >@results.size
       @crackingTasksList.each do |task|
-        if !@results.include?(task)
+        if findTaskInList(results,task).nil?
           task.worker = nil
           task.value = nil
           task.done = false
@@ -87,7 +87,15 @@ class Server
     puts "There is any not done tasks!"
   end
 
-  #dlaczego zwraca liste?
+  def findTaskInList(list, task)
+    list.each do |x|
+      if x.hash == task.hash
+        return x
+      end
+    end
+    return nil
+  end
+
   def getFirstNotAssignedTask
     @mutex.synchronize do
       @crackingTasksList.each do |task|
@@ -102,25 +110,14 @@ class Server
   def getTaskAssignedToWorker(worker)
     @mutex.synchronize do
       @assignedTaskToWorkers.each do |task|
-        if task.worker.equal?(worker) && task.done=false && task.value = nil
+        if task.worker == worker && task.done=false && task.value = nil
           task.worker = nil
         end
       end
     end
   end
 
-
-  def load_cache(filename = "cache")
-    if File.file? filename
-      File.new(filename).each_line do |line|
-        if m = line.chomp.match(/^([a-fA-F0-9]{32}):(.*)$/)
-          #@cache[m[1]] = m[2]
-        end
-      end
-    end
-  end
-
-  def append_to_cache(crackingTask, filename = "cache")
+  def saveToFile(crackingTask, filename = "cache")
     File.open(filename, "a") do |file|
       file.write "#{crackingTask.hash}:#{crackingTask.value}\n"
     end
@@ -139,10 +136,6 @@ class Server
 
 end
 
-
-#worker = Worker.new("worker");
-#server.registerWorker(worker);
-#server.deleteInactiveWorker(worker)
 
 DRb.start_service
 ring_server = Rinda::RingFinger.primary

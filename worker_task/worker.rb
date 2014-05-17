@@ -9,6 +9,7 @@ class Worker
   include DRbUndumped
   attr_accessor :name
   attr_accessor :isWorking
+  @@URLS = ['http://pl.md5decoder.org/', 'http://md5.gromweb.com/?md5=', 'http://www.md5-hash.com/md5-hashing-decrypt/', 'http://www.google.com/search?q=']
 
   def initialize(n, s)
     @name=n
@@ -24,7 +25,7 @@ class Worker
     @isWorking = true
     puts "New task assigned to worker: #{name} task: #{hash}!"
     sleep(3)
-    val = searchByGoogleSearch(hash)
+    val = crackSingleHash(hash)
     puts "Task is done #{val}!"
     if val.nil? && val.to_s.empty?
       puts "fail with searching it"
@@ -33,19 +34,24 @@ class Worker
     @server.saveDone(hash, val)
   end
 
-  def crack_single_hash(hash)
-    response = Net::HTTP.get URI("http://www.google.com/search?q=#{hash}")
-    wordlist = response.split(/\s+/)
-    puts wordlist
-    if plaintext = dictionary_attack(hash, wordlist)
-      return plaintext
+  def crackSingleHash(hash)
+    @@URLS.each do |url|
+      puts "#{url}#{hash}"
+      response = Net::HTTP.get URI("#{url}#{hash}")
+      wordList = response.split(/\s+/)
+      wordList.each do |word|
+        nextSplit = word.split(/[:,"<>'()=] */)
+        dictionaryAttackResult = dictionaryAttack(hash, nextSplit)
+        if !dictionaryAttackResult.nil? && dictionaryAttackResult!=''
+          return dictionaryAttackResult
+        end
+      end
     end
     nil
   end
 
-  def dictionary_attack(hash, wordlist)
-    wordlist.each do |word|
-      puts word
+  def dictionaryAttack(hash, wordList)
+    wordList.each do |word|
       if Digest::MD5.hexdigest(word) == hash.downcase
         return word
       end
@@ -57,7 +63,7 @@ class Worker
     Google::Search::Web.new do |search|
       search.query = hash
       search.size = :large
-    end.each { |item| dictionary_attack(hash,item.content.split(/\s+/)) }
+    end.each { |item| dictionaryAttack(hash, item.content.split(/\s+/)) }
   end
 
 end
