@@ -1,9 +1,8 @@
 require 'rinda/ring'
 require 'thread'
-#require '../worker_task/worker'
-
-
 require '../cracking_task'
+
+
 
 class Server
   include DRbUndumped
@@ -54,7 +53,7 @@ class Server
             @crackingTasksList.delete(first_not_assigned_task)
             @assignedTaskToWorkers.push(first_not_assigned_task)
           else
-            puts "There is no more tasks!"
+            puts "There are no more tasks!"
             checkNotDoneTasks
             sleep(10)
           end
@@ -74,7 +73,7 @@ class Server
     notDoneTasks = Array.new
     if @assignedTaskToWorkers.size >@results.size
       @crackingTasksList.each do |task|
-        if findTaskInList(results,task).nil?
+        if findTaskInList(results, task).nil?
           task.worker = nil
           task.value = nil
           task.done = false
@@ -84,7 +83,7 @@ class Server
         assignTasks
       end
     end
-    puts "There is any not done tasks!"
+    puts "There are any not done tasks!"
   end
 
   def findTaskInList(list, task)
@@ -97,24 +96,12 @@ class Server
   end
 
   def getFirstNotAssignedTask
-    @mutex.synchronize do
-      @crackingTasksList.each do |task|
-        if task.worker.nil?
-          return task
-        end
-      end
-      return nil
-    end
-  end
-
-  def getTaskAssignedToWorker(worker)
-    @mutex.synchronize do
-      @assignedTaskToWorkers.each do |task|
-        if task.worker == worker && task.done=false && task.value = nil
-          task.worker = nil
-        end
+    @crackingTasksList.each do |task|
+      if task.worker.nil?
+        return task
       end
     end
+    return nil
   end
 
   def saveToFile(crackingTask, filename = "cache")
@@ -125,7 +112,9 @@ class Server
 
   def deleteInactiveWorker(worker)
     puts availableWorkersList.size
-    @availableWorkersList.delete(worker)
+    @mutex.synchronize do
+      @availableWorkersList.delete(worker)
+    end
     puts "Inactive worker was deleted!"
     puts availableWorkersList.size
   end

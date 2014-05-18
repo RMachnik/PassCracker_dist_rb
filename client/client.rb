@@ -1,5 +1,4 @@
 require 'rinda/ring'
-require '../cracking_task'
 require 'drb'
 
 class Client
